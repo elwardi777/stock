@@ -1,27 +1,21 @@
 import React from 'react'
-import { useNavigate } from 'react-router-dom'
-import {
-  Box, Typography, Grid, Button, Container, Chip, Skeleton, Divider
-} from '@mui/material'
-import { Leaf, Truck, CreditCard, ShieldCheck, ArrowRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ArrowRight, ChevronRight, Leaf, ShieldCheck, Sprout, Truck } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { productsApi, categoriesApi, promotionsApi, API_URL } from '../../../services/api'
-import { COLORS } from '../../../theme/theme'
+import { productsApi, categoriesApi, promotionsApi } from '../../../services/api'
 import { Product } from '../../../types'
 import ProductCarousel from '../../../components/products/ProductCarousel'
 
-const CATEGORY_PHOTOS: Record<string, string> = {
-  legumes: '/uploads/products/tomates-rondes.jpg',
-  fruits: '/uploads/products/pommes-rouges.jpg',
-  'fruits-exotiques': '/uploads/products/mangues.jpg',
-  herbes: '/uploads/products/menthe-fraiche.jpg',
-  'paniers-prets': '/uploads/products/panier-familial.jpg',
+const STORE_CATEGORY_ASSETS: Record<string, string> = {
+  legumes: '/store-assets/legumes.webp',
+  fruits: '/store-assets/fruits.webp',
+  'fruits-exotiques': '/store-assets/exotiques.webp',
+  herbes: '/store-assets/herbes.webp',
+  'paniers-prets': '/store-assets/paniers.webp',
 }
 
 const HomePage: React.FC = () => {
-  const navigate = useNavigate()
-
-  const { data: categoriesData, isLoading: catsLoading } = useQuery({
+  const { data: categoriesData } = useQuery({
     queryKey: ['public-categories'],
     queryFn: () => categoriesApi.list().then((r) => r.data),
   })
@@ -45,258 +39,156 @@ const HomePage: React.FC = () => {
     return allProducts.filter((p) => p.category_id === cat.id)
   }
 
-  const fruitsProducts = getProductsByCatSlug('fruits')
-  const legumesProducts = getProductsByCatSlug('legumes')
-  const exoticAndBaskets = [
-    ...getProductsByCatSlug('fruits-exotiques'),
-    ...getProductsByCatSlug('paniers-prets'),
-    ...getProductsByCatSlug('herbes'),
-  ]
-
   const topPromo = (activePromos || [])[0]
   const promoDiscount = topPromo?.type === 'percentage' ? Number(topPromo.value) : undefined
 
   return (
-    <Box sx={{ bgcolor: COLORS.white }} className="dfl-fade-in">
-      {/* Compact Commercial Promotional Banner */}
-      <Container maxWidth="xl" sx={{ pt: 3, pb: 2 }}>
-        <Box
-          sx={{
-            borderRadius: 3,
-            overflow: 'hidden',
-            border: `1px solid ${COLORS.border}`,
-            bgcolor: '#F4F8F4',
-          }}
-        >
-          <Grid container alignItems="center">
-            <Grid item xs={12} md={6} sx={{ p: { xs: 3, md: 5 } }}>
-              <Chip
-                icon={<Leaf size={14} color={COLORS.primaryGreen} />}
-                label={topPromo ? `Offre : ${topPromo.title}` : 'Sélection Fraîcheur du Jour'}
-                size="small"
-                sx={{
-                  bgcolor: COLORS.lightGreen,
-                  color: COLORS.darkGreen,
-                  fontWeight: 700,
-                  mb: 2,
-                }}
-              />
-              <Typography
-                variant="h2"
-                sx={{
-                  color: '#171717',
-                  fontWeight: 800,
-                  lineHeight: 1.15,
-                  mb: 1.5,
-                  fontSize: { xs: '1.65rem', md: '2.35rem' },
-                }}
-              >
-                Vos Fruits & Légumes Frais,{' '}
-                <Box component="span" sx={{ color: COLORS.primaryGreen }}>
-                  Toute l'Année !
-                </Box>
-              </Typography>
-              <Typography variant="body1" sx={{ color: '#4B5563', mb: 3, maxWidth: 460, lineHeight: 1.65 }}>
-                Récoltés et sélectionnés chaque matin pour votre cuisine. Livraison rapide à domicile et paiement à la réception.
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                <Button
-                  variant="contained"
-                  size="large"
-                  endIcon={<ArrowRight size={18} />}
-                  onClick={() => navigate('/produits')}
-                  sx={{
-                    bgcolor: COLORS.primaryGreen,
-                    borderRadius: 999,
-                    px: 3.5,
-                    fontWeight: 700,
-                    '&:hover': { bgcolor: COLORS.darkGreen },
-                  }}
-                >
-                  Découvrir le catalogue
-                </Button>
-                <Button
-                  variant="outlined"
-                  size="large"
-                  onClick={() => navigate('/produits?category=paniers-prets')}
-                  sx={{
-                    borderColor: COLORS.darkGreen,
-                    color: COLORS.darkGreen,
-                    borderRadius: 999,
-                    px: 3,
-                    fontWeight: 700,
-                    '&:hover': { bgcolor: COLORS.lightGreen, borderColor: COLORS.darkGreen },
-                  }}
-                >
-                  Voir les paniers
-                </Button>
-              </Box>
-            </Grid>
+    <main className="shell sf-root dfl-fade-in">
+      <div className="sf-breadcrumb">
+        <Link to="/">Accueil</Link>
+        <ChevronRight size={11} />
+        <span>Le marché DFL Fresh</span>
+      </div>
 
-            <Grid item xs={12} md={6}>
-              <Box sx={{ height: { xs: 220, md: 320 }, width: '100%', overflow: 'hidden' }}>
-                <Box
-                  component="img"
-                  src={`${API_URL}/uploads/hero-produce.jpg`}
-                  alt="Fruits et légumes frais DFL Fresh"
-                  sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+      {/* Hero Banner with uploaded seasonal.png */}
+      <section className="hero">
+        <img
+          className="hero-image"
+          src="/store-assets/seasonal.png"
+          alt="Une caisse de légumes et fruits frais de saison"
+        />
+        <div className="hero-content">
+          <p className="eyebrow">Du marché à votre table</p>
+          <h1>
+            DFL Fresh.
+            <br />
+            <span>Le goût du frais.</span>
+          </h1>
+          <p className="hero-copy">
+            Des produits de saison, choisis avec soin.
+            <br />
+            Toute la fraîcheur du marché, chez vous.
+          </p>
+          <Link to="/produits" className="hero-cta">
+            Faire mon marché <ArrowRight size={14} />
+          </Link>
+        </div>
+      </section>
+
+      {/* Service Strip */}
+      <div className="service-strip">
+        <div className="service-item">
+          <Truck size={20} strokeWidth={1.6} />
+          <span>La fraîcheur, livrée chez vous</span>
+        </div>
+        <div className="service-item">
+          <Sprout size={20} strokeWidth={1.6} />
+          <span>Des produits soigneusement sélectionnés</span>
+        </div>
+        <div className="service-item">
+          <Leaf size={20} strokeWidth={1.6} />
+          <span>Le meilleur de chaque saison</span>
+        </div>
+        <div className="service-item">
+          <ShieldCheck size={20} strokeWidth={1.6} />
+          <span>Votre satisfaction, notre priorité</span>
+        </div>
+      </div>
+
+      {/* Categories Grid with uploaded .webp photos */}
+      <section className="sf-section">
+        <div className="section-heading">
+          <div>
+            <h2>À chaque envie, son rayon</h2>
+            <p>Le meilleur du frais commence ici.</p>
+          </div>
+          <Link to="/produits" className="see-all">
+            Tous les rayons <ArrowRight size={13} />
+          </Link>
+        </div>
+        <div className="category-grid">
+          {categories.map((category: any) => (
+            <Link
+              to={`/produits?category=${category.slug}`}
+              className="category-card"
+              key={category.id}
+            >
+              <div className="category-picture">
+                <img
+                  src={STORE_CATEGORY_ASSETS[category.slug] || '/store-assets/frais.webp'}
+                  alt={category.name}
+                  loading="lazy"
                 />
-              </Box>
-            </Grid>
-          </Grid>
-        </Box>
-      </Container>
+              </div>
+              <h3>{category.name}</h3>
+            </Link>
+          ))}
+        </div>
+      </section>
 
-      {/* Featured Categories */}
-      <Container maxWidth="xl" sx={{ py: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700, color: '#171717', mb: 2.5, fontSize: { xs: '1.15rem', md: '1.35rem' } }}>
-          Explorer par catégorie
-        </Typography>
-        <Grid container spacing={2}>
-          {catsLoading
-            ? Array.from({ length: 5 }).map((_, idx) => (
-                <Grid item xs={6} sm={4} md={2.4} key={idx}>
-                  <Skeleton variant="rounded" height={120} sx={{ borderRadius: 2.5 }} />
-                </Grid>
-              ))
-            : categories.map((cat: any) => {
-                const catImg = CATEGORY_PHOTOS[cat.slug] || '/uploads/products/panier-familial.jpg'
-                return (
-                  <Grid item xs={6} sm={4} md={2.4} key={cat.id}>
-                    <Box
-                      onClick={() => navigate(`/produits?category=${cat.slug}`)}
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1.5,
-                        p: 1.5,
-                        borderRadius: 2.5,
-                        border: '1px solid #E5E7EB',
-                        bgcolor: COLORS.white,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        '&:hover': {
-                          borderColor: COLORS.primaryGreen,
-                          bgcolor: '#F9FAFB',
-                          boxShadow: '0 4px 14px rgba(0,0,0,0.06)',
-                        },
-                      }}
-                    >
-                      <Box
-                        component="img"
-                        src={`${API_URL}${catImg}`}
-                        alt={cat.name}
-                        sx={{
-                          width: 56,
-                          height: 56,
-                          borderRadius: '50%',
-                          objectFit: 'cover',
-                          flexShrink: 0,
-                          border: `1px solid ${COLORS.border}`,
-                        }}
-                      />
-                      <Box sx={{ minWidth: 0 }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#171717' }} noWrap>
-                          {cat.name}
-                        </Typography>
-                        {cat.name_ar && (
-                          <Typography variant="caption" sx={{ color: COLORS.textSecondary }} noWrap>
-                            {cat.name_ar}
-                          </Typography>
-                        )}
-                      </Box>
-                    </Box>
-                  </Grid>
-                )
-              })}
-        </Grid>
-      </Container>
+      {/* Carousel 1: La sélection du moment */}
+      <ProductCarousel
+        title="La sélection du moment"
+        description="De belles découvertes pour votre panier."
+        products={allProducts.slice(0, 12)}
+        isLoading={prodsLoading}
+        seeAllPath="/produits"
+        discountPercent={promoDiscount}
+      />
 
-      <Container maxWidth="xl">
-        <Divider />
+      {/* Season Band with uploaded paniers.webp */}
+      <section className="season-band">
+        <div>
+          <p className="eyebrow">La fraîcheur à partager</p>
+          <h2>Un panier. Plein d’envies.</h2>
+          <p>
+            Des fruits et légumes réunis pour le plaisir de cuisiner, de découvrir et de partager.
+          </p>
+          <Link to="/produits?category=paniers-prets" className="see-all">
+            Découvrir nos paniers <ArrowRight size={15} />
+          </Link>
+        </div>
+        <img src="/store-assets/paniers.webp" alt="Panier de fruits et légumes" loading="lazy" />
+      </section>
 
-        {/* Carousel 1: Offres Fraîcheur / Produits du jour */}
-        <ProductCarousel
-          title="Offres Fraîcheur : Les produits du jour"
-          products={allProducts.slice(0, 10)}
-          isLoading={prodsLoading}
-          seeAllPath="/produits"
-          discountPercent={promoDiscount}
-        />
+      {/* Carousel 2: Fruits & Légumes */}
+      <ProductCarousel
+        title="Vos favoris du marché"
+        products={[...getProductsByCatSlug('fruits'), ...getProductsByCatSlug('legumes')]}
+        isLoading={prodsLoading}
+        seeAllPath="/produits?category=fruits"
+      />
 
-        <Divider />
-
-        {/* Carousel 2: Fruits Frais */}
-        <ProductCarousel
-          title="Fruits Frais de Saison"
-          products={fruitsProducts}
-          isLoading={prodsLoading}
-          seeAllPath="/produits?category=fruits"
-        />
-
-        <Divider />
-
-        {/* Carousel 3: Légumes Frais */}
-        <ProductCarousel
-          title="Légumes du Marché"
-          products={legumesProducts}
-          isLoading={prodsLoading}
-          seeAllPath="/produits?category=legumes"
-        />
-
-        <Divider />
-
-        {/* Carousel 4: Fruits Exotiques, Herbes & Paniers */}
-        <ProductCarousel
-          title="Fruits Exotiques, Herbes & Paniers Prêts"
-          products={exoticAndBaskets}
-          isLoading={prodsLoading}
-          seeAllPath="/produits?category=paniers-prets"
-        />
-      </Container>
-
-      {/* Why Choose DFL Fresh */}
-      <Box sx={{ bgcolor: '#F9FAFB', borderTop: `1px solid ${COLORS.border}`, py: 5, mt: 3 }}>
-        <Container maxWidth="xl">
-          <Grid container spacing={3}>
-            {[
-              { icon: <Leaf size={22} />, title: 'Fraîcheur du matin', desc: 'Sélection quotidienne auprès de nos producteurs.' },
-              { icon: <Truck size={22} />, title: 'Livraison Express 24h', desc: 'Créneaux flexibles directement chez vous.' },
-              { icon: <CreditCard size={22} />, title: 'Paiement à la livraison', desc: 'Réglez en espèces à la réception.' },
-              { icon: <ShieldCheck size={22} />, title: 'Qualité contrôlée', desc: 'Satisfaction garantie sur chaque commande.' },
-            ].map((item, i) => (
-              <Grid item xs={12} sm={6} md={3} key={i}>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.75 }}>
-                  <Box
-                    sx={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 2,
-                      bgcolor: COLORS.lightGreen,
-                      color: COLORS.primaryGreen,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {item.icon}
-                  </Box>
-                  <Box>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#171717' }}>
-                      {item.title}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: COLORS.textSecondary, lineHeight: 1.5, display: 'block' }}>
-                      {item.desc}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
-        </Container>
-      </Box>
-    </Box>
+      {/* Why DFL Fresh */}
+      <section className="sf-section">
+        <div className="section-heading">
+          <h2>Le frais, en toute confiance</h2>
+        </div>
+        <div className="why-grid">
+          <div>
+            <Sprout size={28} color="#238b32" />
+            <h3>Le goût de la saison</h3>
+            <p>
+              Des produits qui suivent le rythme des saisons, pour retrouver le vrai goût des bonnes choses.
+            </p>
+          </div>
+          <div>
+            <Leaf size={28} color="#238b32" />
+            <h3>Une sélection soignée</h3>
+            <p>
+              La qualité et la fraîcheur au cœur de chaque choix, du marché jusqu’à votre table.
+            </p>
+          </div>
+          <div>
+            <ShieldCheck size={28} color="#238b32" />
+            <h3>Le plaisir, simplement</h3>
+            <p>
+              Vos essentiels et vos nouvelles envies réunis au même endroit, pour un quotidien plus savoureux.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
   )
 }
 

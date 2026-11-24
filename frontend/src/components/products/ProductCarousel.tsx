@@ -1,12 +1,13 @@
 import React, { useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Box, Typography, IconButton, Skeleton } from '@mui/material'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { Skeleton } from '@mui/material'
 import { Product } from '../../types'
 import ProductCard from '../cards/ProductCard'
 
 interface Props {
   title: string
+  description?: string
   products: Product[]
   seeAllPath?: string
   isLoading?: boolean
@@ -15,117 +16,61 @@ interface Props {
 
 const ProductCarousel: React.FC<Props> = ({
   title,
+  description,
   products,
-  seeAllPath,
+  seeAllPath = '/produits',
   isLoading = false,
   discountPercent,
 }) => {
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const navigate = useNavigate()
-
-  const scroll = (direction: 'left' | 'right') => {
-    if (!scrollRef.current) return
-    const amount = direction === 'left' ? -520 : 520
-    scrollRef.current.scrollBy({ left: amount, behavior: 'smooth' })
-  }
+  const ref = useRef<HTMLDivElement>(null)
 
   if (!isLoading && products.length === 0) return null
 
   return (
-    <Box sx={{ py: 3 }}>
-      {/* Header Row */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.25, gap: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2, flexWrap: 'wrap' }}>
-          <Typography variant="h5" sx={{ fontWeight: 700, color: '#171717', fontSize: { xs: '1.15rem', md: '1.35rem' } }}>
-            {title}
-          </Typography>
-          {seeAllPath && (
-            <Typography
-              component="button"
-              onClick={() => navigate(seeAllPath)}
-              sx={{
-                background: 'none',
-                border: 'none',
-                p: 0,
-                cursor: 'pointer',
-                color: '#17472D',
-                fontWeight: 600,
-                fontSize: '0.88rem',
-                textDecoration: 'underline',
-                '&:hover': { color: '#238B32' },
-              }}
-            >
-              Voir tout
-            </Typography>
-          )}
-        </Box>
-
-        <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 0.75 }}>
-          <IconButton
-            size="small"
-            onClick={() => scroll('left')}
-            aria-label="Précédent"
-            sx={{
-              border: '1px solid #E5E7EB',
-              bgcolor: '#FFFFFF',
-              color: '#171717',
-              '&:hover': { bgcolor: '#F3F4F6' },
-            }}
+    <section className="sf-section">
+      <div className="section-heading">
+        <div>
+          <h2>{title}</h2>
+          {description && <p>{description}</p>}
+        </div>
+        <div className="section-actions">
+          <Link to={seeAllPath} className="see-all">
+            Tout voir <ArrowRight size={13} />
+          </Link>
+          <button
+            type="button"
+            className="arrow-control"
+            aria-label={`Précédent : ${title}`}
+            disabled={!products.length}
+            onClick={() => ref.current?.scrollBy({ left: -470, behavior: 'smooth' })}
           >
-            <ChevronLeft size={18} />
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => scroll('right')}
-            aria-label="Suivant"
-            sx={{
-              border: '1px solid #E5E7EB',
-              bgcolor: '#FFFFFF',
-              color: '#171717',
-              '&:hover': { bgcolor: '#F3F4F6' },
-            }}
+            <ArrowLeft size={14} />
+          </button>
+          <button
+            type="button"
+            className="arrow-control"
+            aria-label={`Suivant : ${title}`}
+            disabled={!products.length}
+            onClick={() => ref.current?.scrollBy({ left: 470, behavior: 'smooth' })}
           >
-            <ChevronRight size={18} />
-          </IconButton>
-        </Box>
-      </Box>
+            <ArrowRight size={14} />
+          </button>
+        </div>
+      </div>
 
-      {/* Horizontal Scroll Track */}
-      <Box
-        ref={scrollRef}
-        sx={{
-          display: 'flex',
-          gap: 2,
-          overflowX: 'auto',
-          scrollSnapType: 'x proximity',
-          pb: 1,
-          '&::-webkit-scrollbar': { height: 5 },
-          '&::-webkit-scrollbar-thumb': { bgcolor: '#D1D5DB', borderRadius: 3 },
-        }}
-      >
+      <div className="sf-product-carousel" ref={ref}>
         {isLoading
           ? Array.from({ length: 6 }).map((_, i) => (
-              <Box key={i} sx={{ minWidth: { xs: 175, sm: 210 }, flexShrink: 0 }}>
-                <Skeleton variant="rounded" height={295} sx={{ borderRadius: 2.5 }} />
-              </Box>
+              <div key={i}>
+                <Skeleton variant="rounded" height={290} sx={{ borderRadius: 1.5 }} />
+              </div>
             ))
           : products.map((product) => (
-              <Box
-                key={product.id}
-                sx={{
-                  width: { xs: 175, sm: 210, md: 218 },
-                  minWidth: { xs: 175, sm: 210, md: 218 },
-                  flexShrink: 0,
-                  scrollSnapAlign: 'start',
-                }}
-              >
-                <ProductCard product={product} discountPercent={discountPercent} />
-              </Box>
+              <ProductCard key={product.id} product={product} discountPercent={discountPercent} />
             ))}
-      </Box>
-    </Box>
+      </div>
+    </section>
   )
 }
 
 export default ProductCarousel
-

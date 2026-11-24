@@ -10,6 +10,7 @@ import { theme } from './theme/theme'
 import { AuthProvider } from './contexts/AuthContext'
 import { CartProvider } from './contexts/CartContext'
 import './index.css'
+import './storefront.css'
 
 const queryClient = new QueryClient({
   defaultOptions: {
