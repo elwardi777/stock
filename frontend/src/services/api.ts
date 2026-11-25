@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { authStorage } from '../utils/authStorage'
 
 export const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
 
@@ -7,40 +8,46 @@ export const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-// Request interceptor: attach JWT
+// Request interceptor: attach JWT from current tab's sessionStorage
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token')
+  const token = authStorage.getAccessToken()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
 })
 
-// Response interceptor: handle 401
+// Response interceptor: handle 401 within the current tab only
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config
-    if (error.response?.status === 401 && !original._retry) {
+    const isAuthAttempt =
+      original?.url?.includes('/auth/login') || original?.url?.includes('/auth/refresh')
+
+    if (error.response?.status === 401 && original && !original._retry && !isAuthAttempt) {
       original._retry = true
-      const refreshToken = localStorage.getItem('refresh_token')
+      const refreshToken = authStorage.getRefreshToken()
       if (refreshToken) {
         try {
           const res = await axios.post(`${API_URL}/api/auth/refresh`, {
             refresh_token: refreshToken,
           })
           const { access_token } = res.data
-          localStorage.setItem('access_token', access_token)
+          authStorage.setAccessToken(access_token)
           original.headers.Authorization = `Bearer ${access_token}`
           return api(original)
         } catch {
-          localStorage.removeItem('access_token')
-          localStorage.removeItem('refresh_token')
-          window.location.href = '/login'
+          authStorage.clearTokens()
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login'
+          }
         }
       } else {
-        localStorage.removeItem('access_token')
-        window.location.href = '/login'
+        authStorage.clearTokens()
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login'
+        }
       }
     }
     return Promise.reject(error)

@@ -140,7 +140,7 @@ const UsersPage: React.FC = () => {
                 <TableCell>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <Avatar sx={{ bgcolor: ROLE_COLORS[user.role] || COLORS.primaryGreen, width: 36, height: 36, fontSize: '0.875rem' }}>
-                      {user.full_name.charAt(0).toUpperCase()}
+                      {user.full_name?.charAt(0).toUpperCase()}
                     </Avatar>
                     <Box>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>{user.full_name}</Typography>

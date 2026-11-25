@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useSnackbar } from 'notistack'
 import { User } from '../types'
 import { authApi } from '../services/api'
+import { authStorage } from '../utils/authStorage'
 
 interface AuthContextType {
   user: User | null
@@ -27,13 +28,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { enqueueSnackbar } = useSnackbar()
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token')
+    const token = authStorage.getAccessToken()
     if (token) {
       authApi.me()
         .then((res) => setUser(res.data))
         .catch(() => {
-          localStorage.removeItem('access_token')
-          localStorage.removeItem('refresh_token')
+          authStorage.clearTokens()
           setUser(null)
         })
         .finally(() => setIsLoading(false))
@@ -45,8 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = useCallback(async (email: string, password: string) => {
     const res = await authApi.login(email, password)
     const { access_token, refresh_token, user: userData } = res.data
-    localStorage.setItem('access_token', access_token)
-    localStorage.setItem('refresh_token', refresh_token)
+    authStorage.setTokens(access_token, refresh_token)
     queryClient.clear()
     setUser(userData)
   }, [queryClient])
@@ -55,8 +54,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isLoggingOutRef.current) return
     isLoggingOutRef.current = true
     try {
-      const refreshToken = localStorage.getItem('refresh_token')
-      const accessToken = localStorage.getItem('access_token')
+      const refreshToken = authStorage.getRefreshToken()
+      const accessToken = authStorage.getAccessToken()
       if (accessToken || refreshToken) {
         try {
           await authApi.logout(refreshToken)
@@ -65,8 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
     } finally {
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('refresh_token')
+      authStorage.clearTokens()
       queryClient.clear()
       setUser(null)
       isLoggingOutRef.current = false
