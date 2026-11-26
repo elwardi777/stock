@@ -1,12 +1,19 @@
 import React from 'react'
 import { Container, Typography, Box, Card, CardContent } from '@mui/material'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ordersApi } from '../../../services/api'
 import StatusChip from '../../../components/common/StatusChip'
 import { COLORS } from '../../../theme/theme'
+import { useLiveSync } from '../../../ws'
 
 const ClientOrdersPage: React.FC = () => {
-  const { data } = useQuery({ queryKey: ['my-orders'], queryFn: () => ordersApi.list().then(r => r.data) })
+  const queryClient = useQueryClient()
+  const { data, refetch } = useQuery({ queryKey: ['my-orders'], queryFn: () => ordersApi.list().then(r => r.data) })
+
+  useLiveSync(['orders'], () => {
+    queryClient.invalidateQueries({ queryKey: ['my-orders'] })
+    refetch()
+  })
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography variant="h4" sx={{ fontWeight: 700, mb: 3 }}>Mes Commandes</Typography>

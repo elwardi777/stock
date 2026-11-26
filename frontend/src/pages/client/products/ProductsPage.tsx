@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { productsApi, categoriesApi, promotionsApi } from '../../../services/api'
 import { Product } from '../../../types'
 import ProductCard from '../../../components/cards/ProductCard'
+import { useLiveSync } from '../../../ws'
 
 const ProductsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -26,14 +27,19 @@ const ProductsPage: React.FC = () => {
     queryFn: () => categoriesApi.list().then((r) => r.data),
   })
 
-  const { data: productsData, isLoading } = useQuery({
+  const { data: productsData, isLoading, refetch: refetchProducts } = useQuery({
     queryKey: ['catalogue-products', search],
     queryFn: () => productsApi.list({ search: search || undefined, is_visible: true, limit: 100 }).then((r) => r.data),
   })
 
-  const { data: activePromos } = useQuery({
+  const { data: activePromos, refetch: refetchPromos } = useQuery({
     queryKey: ['public-active-promos'],
     queryFn: () => promotionsApi.activePublic().then((r) => r.data),
+  })
+
+  useLiveSync(['products', 'stock'], () => {
+    refetchProducts()
+    refetchPromos()
   })
 
   const topPromo = (activePromos || [])[0]

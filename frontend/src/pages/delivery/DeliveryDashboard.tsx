@@ -6,14 +6,20 @@ import { useSnackbar } from 'notistack'
 import { deliveriesApi, ordersApi } from '../../services/api'
 import { COLORS } from '../../theme/theme'
 import StatusChip from '../../components/common/StatusChip'
+import { useLiveSync } from '../../ws'
 
 const DeliveryDashboard: React.FC = () => {
   const { enqueueSnackbar } = useSnackbar()
   const queryClient = useQueryClient()
 
-  const { data: deliveries } = useQuery({
+  const { data: deliveries, refetch } = useQuery({
     queryKey: ['my-deliveries'],
     queryFn: () => deliveriesApi.myDeliveries().then(r => r.data),
+  })
+
+  useLiveSync(['livraisons', 'orders'], () => {
+    queryClient.invalidateQueries({ queryKey: ['my-deliveries'] })
+    refetch()
   })
 
   const statusMutation = useMutation({

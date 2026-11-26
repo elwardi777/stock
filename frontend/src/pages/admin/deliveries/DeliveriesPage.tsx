@@ -7,16 +7,22 @@ import { useQuery } from '@tanstack/react-query'
 import { deliveriesApi, ordersApi } from '../../../services/api'
 import { COLORS } from '../../../theme/theme'
 import StatusChip from '../../../components/common/StatusChip'
+import { useLiveSync } from '../../../ws'
 
 const DeliveriesPage: React.FC = () => {
-  const { data: livreurs } = useQuery({
+  const { data: livreurs, refetch: refetchLivreurs } = useQuery({
     queryKey: ['livreurs-list'],
     queryFn: () => deliveriesApi.livreurs().then(r => r.data),
   })
 
-  const { data: ordersData } = useQuery({
+  const { data: ordersData, refetch: refetchOrders } = useQuery({
     queryKey: ['delivery-orders'],
     queryFn: () => ordersApi.list({ status: 'en_livraison' }).then(r => r.data),
+  })
+
+  useLiveSync(['livraisons', 'orders'], () => {
+    refetchLivreurs()
+    refetchOrders()
   })
 
   return (

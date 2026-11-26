@@ -24,6 +24,7 @@ import ClientOrdersPage from './pages/client/orders/ClientOrdersPage'
 // Admin pages
 import AdminDashboard from './pages/admin/dashboard/AdminDashboard'
 import UsersPage from './pages/admin/users/UsersPage'
+import ClientsPage from './pages/admin/clients/ClientsPage'
 import AdminProductsPage from './pages/admin/products/AdminProductsPage'
 import StockPage from './pages/admin/stock/StockPage'
 import OrdersPage from './pages/admin/orders/OrdersPage'
@@ -66,12 +67,17 @@ const App: React.FC = () => {
 
       {/* Admin */}
       <Route path="/admin" element={
-        <ProtectedRoute roles={['administrator', 'gestionnaire']}>
+        <ProtectedRoute roles={['administrator', 'admin', 'gestionnaire', 'commercial']}>
           <AdminLayout />
         </ProtectedRoute>
       }>
         <Route index element={<AdminDashboard />} />
         <Route path="users" element={<UsersPage />} />
+        <Route path="clients" element={
+          <ProtectedRoute roles={['administrator', 'admin', 'commercial']}>
+            <ClientsPage />
+          </ProtectedRoute>
+        } />
         <Route path="products" element={<AdminProductsPage />} />
         <Route path="stock" element={<StockPage />} />
         <Route path="orders" element={<OrdersPage />} />

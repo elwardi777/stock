@@ -13,6 +13,8 @@ router = APIRouter()
 def user_response(user: dict) -> dict:
     u = serialize_doc(user)
     u.pop("password_hash", None)
+    if "permissions" not in u or u["permissions"] is None:
+        u["permissions"] = {}
     return u
 
 

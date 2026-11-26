@@ -12,19 +12,26 @@ import {
 import KpiCard from '../../../components/cards/KpiCard'
 import { dashboardApi, financeApi } from '../../../services/api'
 import { COLORS } from '../../../theme/theme'
+import { useLiveSync } from '../../../ws'
 
 const AdminDashboard: React.FC = () => {
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading, refetch: refetchStats } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: () => dashboardApi.stats().then(r => r.data),
   })
-  const { data: chartData } = useQuery({
+  const { data: chartData, refetch: refetchChart } = useQuery({
     queryKey: ['revenue-chart'],
     queryFn: () => financeApi.revenueChart(30).then(r => r.data),
   })
-  const { data: topProducts } = useQuery({
+  const { data: topProducts, refetch: refetchTopProducts } = useQuery({
     queryKey: ['top-products'],
     queryFn: () => financeApi.topProducts(5).then(r => r.data),
+  })
+
+  useLiveSync(['orders', 'products', 'stock', 'users', 'livraisons'], () => {
+    refetchStats()
+    refetchChart()
+    refetchTopProducts()
   })
 
   const kpis = [

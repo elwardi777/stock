@@ -6,6 +6,7 @@ router = APIRouter()
 AVAILABLE_MODULES = {
     "dashboard": {"label": "Tableau de bord", "actions": ["view"]},
     "users": {"label": "Utilisateurs", "actions": ["view", "create", "update", "delete"]},
+    "clients": {"label": "Clients & Besoins", "actions": ["view", "create", "update", "delete"]},
     "products": {"label": "Produits", "actions": ["view", "create", "update", "delete"]},
     "categories": {"label": "Catégories", "actions": ["view", "create", "update", "delete"]},
     "stock": {"label": "Stock", "actions": ["view", "create", "update", "delete"]},

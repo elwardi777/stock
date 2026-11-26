@@ -6,6 +6,7 @@ import {
   Divider
 } from '@mui/material'
 import { CreditCard } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useCart } from '../../../contexts/CartContext'
 import { ordersApi } from '../../../services/api'
 import { COLORS } from '../../../theme/theme'
@@ -15,6 +16,7 @@ const TIME_SLOTS = ['08:00-12:00', '12:00-16:00', '16:00-20:00']
 
 const CheckoutPage: React.FC = () => {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { items, totalPrice, clearCart } = useCart()
   const { enqueueSnackbar } = useSnackbar()
   const [loading, setLoading] = useState(false)
@@ -40,6 +42,7 @@ const CheckoutPage: React.FC = () => {
       }
       const res = await ordersApi.create(orderData)
       clearCart()
+      queryClient.invalidateQueries({ queryKey: ['my-orders'] })
       enqueueSnackbar(`Commande ${res.data.order_number} créée avec succès!`, { variant: 'success' })
       navigate('/mes-commandes')
     } catch (err: any) {

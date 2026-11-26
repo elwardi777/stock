@@ -6,7 +6,7 @@ import {
 } from '@mui/material'
 import {
   LayoutDashboard, Users, Package, Warehouse, ShoppingCart,
-  Truck, Tag, BarChart2, FileText, Settings, LogOut, Leaf
+  Truck, Tag, BarChart2, FileText, Settings, LogOut, Store
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { COLORS } from '../../theme/theme'
@@ -16,6 +16,7 @@ interface NavItem {
   path: string
   icon: React.ReactNode
   permission?: string
+  roles?: string[]
 }
 
 interface NavSection {
@@ -34,6 +35,13 @@ const NAV_SECTIONS: NavSection[] = [
     section: 'GESTION',
     items: [
       { label: 'Utilisateurs', path: '/admin/users', icon: <Users size={18} />, permission: 'users' },
+      {
+        label: 'Clients & Besoins',
+        path: '/admin/clients',
+        icon: <Store size={18} />,
+        permission: 'clients',
+        roles: ['administrator', 'admin', 'commercial'],
+      },
       { label: 'Catalogue produits', path: '/admin/products', icon: <Package size={18} />, permission: 'products' },
       { label: 'Gestion du stock', path: '/admin/stock', icon: <Warehouse size={18} />, permission: 'stock' },
       { label: 'Commandes', path: '/admin/orders', icon: <ShoppingCart size={18} />, permission: 'orders' },
@@ -73,8 +81,10 @@ const AdminSidebar: React.FC<Props> = ({ open, onClose, width }) => {
   }
 
   const canSee = (item: NavItem) => {
+    const role = (user?.role || '').toLowerCase().trim()
+    if (role === 'administrator' || role === 'admin') return true
+    if (item.roles && item.roles.includes(role)) return true
     if (!item.permission) return true
-    if (user?.role === 'administrator') return true
     return hasPermission(item.permission, 'view')
   }
 

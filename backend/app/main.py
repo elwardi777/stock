@@ -10,9 +10,10 @@ from app.api.routes import (
     auth, users, permissions, products, categories,
     stock, orders, deliveries, promotions, finance,
     reports, notifications, settings as settings_router,
-    audit, dashboard
+    audit, dashboard, clients
 )
 from app.middleware.logging import LoggingMiddleware
+from app.ws import router as ws_router
 
 
 @asynccontextmanager
@@ -61,6 +62,11 @@ app.include_router(notifications.router, prefix="/api/notifications", tags=["Not
 app.include_router(settings_router.router, prefix="/api/settings", tags=["Settings"])
 app.include_router(audit.router, prefix="/api/audit", tags=["Audit"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
+app.include_router(clients.router, prefix="/api/clients", tags=["Clients"])
+
+
+# WebSocket
+app.include_router(ws_router)
 
 
 @app.get("/api/health")

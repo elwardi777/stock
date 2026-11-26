@@ -14,6 +14,7 @@ import { COLORS } from '../../../theme/theme'
 import StatusChip from '../../../components/common/StatusChip'
 import KpiCard from '../../../components/cards/KpiCard'
 import { Product } from '../../../types'
+import { useLiveSync } from '../../../ws'
 
 const StockPage: React.FC = () => {
   const { enqueueSnackbar } = useSnackbar()
@@ -24,14 +25,21 @@ const StockPage: React.FC = () => {
   const [adjustDialog, setAdjustDialog] = useState<{ open: boolean; product: Product | null }>({ open: false, product: null })
   const [adjustForm, setAdjustForm] = useState({ type: 'in', quantity: '', reason: '', unit_cost: '' })
 
-  const { data: overview } = useQuery({
+  const { data: overview, refetch: refetchOverview } = useQuery({
     queryKey: ['stock-overview'],
     queryFn: () => stockApi.overview().then(r => r.data),
   })
 
-  const { data: productsData, isLoading } = useQuery({
+  const { data: productsData, isLoading, refetch: refetchProducts } = useQuery({
     queryKey: ['products', search, statusFilter],
     queryFn: () => productsApi.list({ search, status: statusFilter || undefined, limit: 100 }).then(r => r.data),
+  })
+
+  useLiveSync(['stock', 'products', 'orders'], () => {
+    queryClient.invalidateQueries({ queryKey: ['products'] })
+    queryClient.invalidateQueries({ queryKey: ['stock-overview'] })
+    refetchOverview()
+    refetchProducts()
   })
 
   const adjustMutation = useMutation({

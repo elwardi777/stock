@@ -3,6 +3,7 @@ from app.database.connection import get_database
 from app.core.jwt import require_permission
 from app.utils.helpers import serialize_doc, now_utc
 from bson import ObjectId
+from app.ws import notify_update
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -41,6 +42,7 @@ async def create_promotion(
     data["created_by"] = str(current_user["_id"])
     result = await db.promotions.insert_one(data)
     data["_id"] = result.inserted_id
+    await notify_update("products")
     return serialize_doc(data)
 
 
@@ -56,6 +58,7 @@ async def update_promotion(
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Promotion introuvable")
     updated = await db.promotions.find_one({"_id": ObjectId(promo_id)})
+    await notify_update("products")
     return serialize_doc(updated)
 
 
@@ -68,5 +71,6 @@ async def delete_promotion(
     result = await db.promotions.delete_one({"_id": ObjectId(promo_id)})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Promotion introuvable")
+    await notify_update("products")
     return {"message": "Promotion supprimée"}
 

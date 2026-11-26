@@ -9,6 +9,7 @@ import App from './App'
 import { theme } from './theme/theme'
 import { AuthProvider } from './contexts/AuthContext'
 import { CartProvider } from './contexts/CartContext'
+import { GlobalLiveSync } from './ws'
 import './index.css'
 import './storefront.css'
 
@@ -24,6 +25,7 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
+      <GlobalLiveSync />
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>

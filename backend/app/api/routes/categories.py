@@ -3,6 +3,7 @@ from app.database.connection import get_database
 from app.core.jwt import get_current_user, require_role, require_permission
 from app.schemas.products import CreateCategoryRequest
 from app.utils.helpers import serialize_doc, now_utc
+from app.ws import notify_update
 from bson import ObjectId
 
 router = APIRouter()
@@ -11,6 +12,9 @@ router = APIRouter()
 @router.get("/")
 async def list_categories(db=Depends(get_database)):
     cats = await db.categories.find({"is_active": True}).sort("order", 1).to_list(length=100)
+    if not cats:
+        # Fallback to all categories if none are explicitly marked is_active
+        cats = await db.categories.find().sort("order", 1).to_list(length=100)
     return [serialize_doc(c) for c in cats]
 
 
@@ -36,6 +40,7 @@ async def create_category(
     doc["created_at"] = now_utc()
     result = await db.categories.insert_one(doc)
     doc["_id"] = result.inserted_id
+    await notify_update("products")
     return serialize_doc(doc)
 
 
@@ -52,6 +57,7 @@ async def update_category(
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Catégorie introuvable")
     updated = await db.categories.find_one({"_id": ObjectId(cat_id)})
+    await notify_update("products")
     return serialize_doc(updated)
 
 
@@ -64,4 +70,5 @@ async def delete_category(
     result = await db.categories.delete_one({"_id": ObjectId(cat_id)})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Catégorie introuvable")
+    await notify_update("products")
     return {"message": "Catégorie supprimée"}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Box, Typography, Card, CardContent, Grid, Table, TableHead,
   TableBody, TableRow, TableCell, TableContainer, Paper, IconButton,
@@ -12,6 +12,7 @@ import { ordersApi, deliveriesApi } from '../../../services/api'
 import { COLORS } from '../../../theme/theme'
 import { Order } from '../../../types'
 import StatusChip from '../../../components/common/StatusChip'
+import { useLiveSync } from '../../../ws'
 
 const ORDER_STATUSES = [
   { value: 'en_attente', label: 'En attente' },
@@ -32,14 +33,21 @@ const OrdersPage: React.FC = () => {
   const [assignDialog, setAssignDialog] = useState<{ open: boolean; orderId?: string }>({ open: false })
   const [selectedLivreur, setSelectedLivreur] = useState('')
 
-  const { data: ordersData } = useQuery({
+  const { data: ordersData, refetch: refetchOrders } = useQuery({
     queryKey: ['admin-orders', statusFilter],
     queryFn: () => ordersApi.list({ status: statusFilter || undefined }).then(r => r.data),
   })
 
-  const { data: livreurs } = useQuery({
+  const { data: livreurs, refetch: refetchLivreurs } = useQuery({
     queryKey: ['livreurs'],
     queryFn: () => deliveriesApi.livreurs().then(r => r.data),
+  })
+
+  useLiveSync(['orders', 'livraisons'], () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-orders'] })
+    queryClient.invalidateQueries({ queryKey: ['livreurs'] })
+    refetchOrders()
+    refetchLivreurs()
   })
 
   const statusMutation = useMutation({

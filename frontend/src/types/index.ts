@@ -3,7 +3,7 @@ export interface User {
   full_name: string
   email: string
   phone: string
-  role: 'client' | 'administrator' | 'gestionnaire' | 'livreur'
+  role: 'client' | 'administrator' | 'admin' | 'gestionnaire' | 'livreur' | 'commercial'
   permissions: Record<string, Record<string, boolean>>
   is_active: boolean
   created_at: string
@@ -122,4 +122,26 @@ export interface Promotion {
   start_date?: string
   end_date?: string
   is_active: boolean
+}
+
+export type ClientNeedStatus = 'EN_ATTENTE_ACHAT' | 'ACHETE' | 'LIVRE' | 'ANNULE'
+
+export interface ClientNeed {
+  id: string
+  produit: string
+  quantite_kg: number
+  status: ClientNeedStatus | string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface CommercialClient {
+  id: string
+  name: string
+  activity_type: string
+  phone: string
+  address: string
+  needs: ClientNeed[]
+  created_at: string
+  updated_at?: string
 }

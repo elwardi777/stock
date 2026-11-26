@@ -4,6 +4,7 @@ from app.core.jwt import get_current_user, require_permission
 from app.utils.helpers import serialize_doc, now_utc
 from app.utils.audit import log_action
 from app.core.config import settings
+from app.ws import notify_update
 from bson import ObjectId
 from typing import Optional
 import os, uuid, aiofiles
@@ -169,7 +170,10 @@ async def create_product(
     
     await log_action(db, str(current_user["_id"]), current_user["full_name"],
                      "CREATE", "products", f"Création du produit: {name_fr}", entity_id=str(result.inserted_id))
-    
+
+    await notify_update("products")
+    await notify_update("stock")
+
     return serialize_doc(doc)
 
 
@@ -225,7 +229,10 @@ async def update_product(
     
     await log_action(db, str(current_user["_id"]), current_user["full_name"],
                      "UPDATE", "products", f"Modification: {product['name_fr']}", entity_id=product_id)
-    
+
+    await notify_update("products")
+    await notify_update("stock")
+
     updated = await db.products.find_one({"_id": ObjectId(product_id)})
     return serialize_doc(updated)
 
@@ -242,6 +249,8 @@ async def delete_product(
     await db.products.delete_one({"_id": ObjectId(product_id)})
     await log_action(db, str(current_user["_id"]), current_user["full_name"],
                      "DELETE", "products", f"Suppression: {product['name_fr']}", entity_id=product_id)
+    await notify_update("products")
+    await notify_update("stock")
     return {"message": "Produit supprimé"}
 
 
@@ -256,5 +265,7 @@ async def toggle_visibility(
         raise HTTPException(status_code=404, detail="Produit introuvable")
     new_visibility = not product.get("is_visible", True)
     await db.products.update_one({"_id": ObjectId(product_id)}, {"$set": {"is_visible": new_visibility, "updated_at": now_utc()}})
+    await notify_update("products")
+    await notify_update("stock")
     return {"is_visible": new_visibility}
 

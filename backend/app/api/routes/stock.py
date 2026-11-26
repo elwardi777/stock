@@ -3,6 +3,7 @@ from app.database.connection import get_database
 from app.core.jwt import require_permission
 from app.utils.helpers import serialize_doc, now_utc
 from app.utils.audit import log_action
+from app.ws import notify_update
 from bson import ObjectId
 from typing import Optional
 
@@ -77,7 +78,10 @@ async def adjust_stock(
     await log_action(db, str(current_user["_id"]), current_user["full_name"],
                      "STOCK_ADJUST", "stock", f"Ajustement stock {product['name_fr']}: {old_qty} -> {new_qty}",
                      old_value=old_qty, new_value=new_qty, entity_id=product_id)
-    
+
+    await notify_update("stock")
+    await notify_update("products")
+
     return {"message": "Stock ajusté", "old_quantity": old_qty, "new_quantity": new_qty}
 
 

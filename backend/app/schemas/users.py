@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, Dict, Any
+from typing import Optional, Dict
 from enum import Enum
 
 
@@ -8,6 +8,12 @@ class UserRole(str, Enum):
     ADMINISTRATOR = "administrator"
     GESTIONNAIRE = "gestionnaire"
     LIVREUR = "livreur"
+    COMMERCIAL = "commercial"
+
+
+class VisibilityMode(str, Enum):
+    OWN_ONLY = "own_only"
+    ALL_FILTERED = "all_filtered"
 
 
 class PermissionAction(BaseModel):
@@ -25,13 +31,18 @@ class CreateUserRequest(BaseModel):
     role: UserRole
     is_active: bool = True
     permissions: Optional[Dict[str, Dict[str, bool]]] = {}
+    quartier: Optional[str] = None
+    visibility_mode: Optional[VisibilityMode] = VisibilityMode.OWN_ONLY
 
 
 class UpdateUserRequest(BaseModel):
     full_name: Optional[str] = None
     phone: Optional[str] = None
+    role: Optional[UserRole] = None
     is_active: Optional[bool] = None
     permissions: Optional[Dict[str, Dict[str, bool]]] = None
+    quartier: Optional[str] = None
+    visibility_mode: Optional[VisibilityMode] = None
 
 
 class UpdatePermissionsRequest(BaseModel):

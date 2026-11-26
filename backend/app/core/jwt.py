@@ -67,7 +67,11 @@ async def get_current_user_optional(
 
 def require_role(*roles: str):
     async def checker(current_user=Depends(get_current_user)):
-        if current_user.get("role") not in roles:
+        user_role = (current_user.get("role") or "").lower().strip()
+        allowed = {r.lower().strip() for r in roles}
+        if "administrator" in allowed:
+            allowed.add("admin")
+        if user_role not in allowed:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Accès non autorisé"
@@ -82,17 +86,24 @@ def require_admin():
 
 def require_permission(module: str, action: str):
     async def checker(current_user=Depends(get_current_user), db=Depends(get_database)):
-        role = current_user.get("role")
-        # Admin always has full access
-        if role == "administrator":
+        role = current_user.get("role", "").lower().strip()
+        # Admin and gestionnaire always have full operational product management access
+        # Admin is superuser across all modules
+        if role in ("administrator", "admin"):
             return current_user
-        # Check permissions
-        permissions = current_user.get("permissions", {})
-        module_perms = permissions.get(module, {})
-        if not module_perms.get(action, False):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Permission refusée: {module}.{action}"
-            )
-        return current_user
+        if role == "gestionnaire" and module in ("products", "categories", "stock"):
+            return current_user
+        if role == "commercial" and module == "clients":
+            return current_user
+        
+        # Check explicit granular permissions
+        permissions = current_user.get("permissions") or {}
+        module_perms = permissions.get(module) or {}
+        if module_perms.get(action, False) or module_perms.get("*", False):
+            return current_user
+            
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Permission refusée: {module}.{action}"
+        )
     return checker

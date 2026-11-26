@@ -4,6 +4,7 @@ from app.core.jwt import get_current_user, require_permission
 from app.schemas.orders import CreateOrderRequest, UpdateOrderStatusRequest, AssignDeliveryRequest
 from app.utils.helpers import serialize_doc, now_utc, generate_order_number
 from app.utils.audit import log_action
+from app.ws import notify_update
 from bson import ObjectId
 from typing import Optional
 
@@ -79,7 +80,10 @@ async def create_order(
     
     result = await db.orders.insert_one(order_doc)
     order_doc["_id"] = result.inserted_id
-    
+
+    await notify_update("orders")
+    await notify_update("stock")
+    await notify_update("livraisons")
     return serialize_doc(order_doc)
 
 
@@ -169,7 +173,11 @@ async def update_order_status(
     await log_action(db, str(current_user["_id"]), current_user["full_name"],
                      "STATUS_UPDATE", "orders", f"Statut commande {order['order_number']}: {old_status} -> {request.status}",
                      entity_id=order_id)
-    
+
+    await notify_update("orders")
+    await notify_update("livraisons")
+    if request.status == "annulee" and old_status not in ["annulee", "non_livree"]:
+        await notify_update("stock")
     return {"message": "Statut mis à jour"}
 
 
@@ -188,5 +196,8 @@ async def assign_livreur(
         {"_id": ObjectId(order_id)},
         {"$set": {"livreur_id": request.livreur_id, "livreur_name": livreur["full_name"], "updated_at": now_utc()}}
     )
+
+    await notify_update("orders")
+    await notify_update("livraisons")
     return {"message": f"Commande assignée à {livreur['full_name']}"}
 

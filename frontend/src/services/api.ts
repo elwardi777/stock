@@ -161,3 +161,14 @@ export const permissionsApi = {
   modules: () => api.get('/permissions/modules'),
   myPermissions: () => api.get('/permissions/my-permissions'),
 }
+
+// Commercial Clients & Daily Needs
+export const clientsApi = {
+  list: (params?: object) => api.get('/clients', { params }),
+  create: (data: object) => api.post('/clients', data),
+  addNeed: (clientId: string, data: object) => api.post(`/clients/${clientId}/needs`, data),
+  updateNeed: (clientId: string, needId: string, data: object) =>
+    api.patch(`/clients/${clientId}/needs/${needId}`, data),
+  deleteNeed: (clientId: string, needId: string) =>
+    api.delete(`/clients/${clientId}/needs/${needId}`),
+}

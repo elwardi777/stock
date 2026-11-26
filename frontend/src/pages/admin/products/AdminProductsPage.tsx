@@ -12,10 +12,19 @@ import { productsApi, categoriesApi } from '../../../services/api'
 import { COLORS } from '../../../theme/theme'
 import { Product } from '../../../types'
 import StatusChip from '../../../components/common/StatusChip'
+import { useLiveSync } from '../../../ws'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
 
 const UNITS = ['kg', 'piece', 'botte', 'pack', 'panier', 'caisse']
+
+const FALLBACK_CATEGORIES = [
+  { id: 'cat-legumes', name: 'Légumes', slug: 'legumes' },
+  { id: 'cat-fruits', name: 'Fruits', slug: 'fruits' },
+  { id: 'cat-fruits-exotiques', name: 'Fruits Exotiques', slug: 'fruits-exotiques' },
+  { id: 'cat-herbes', name: 'Herbes', slug: 'herbes' },
+  { id: 'cat-paniers-prets', name: 'Paniers Prêts', slug: 'paniers-prets' },
+]
 
 const DEFAULT_FORM = {
   name_fr: '', name_ar: '', description: '', category_id: '',
@@ -33,14 +42,50 @@ const AdminProductsPage: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [search, setSearch] = useState('')
 
-  const { data: categories } = useQuery({
+  const { data: rawCategories, isLoading: categoriesLoading, isError: categoriesError } = useQuery({
     queryKey: ['all-categories'],
-    queryFn: () => categoriesApi.listAll().then(r => r.data),
+    queryFn: async () => {
+      try {
+        const res = await categoriesApi.listAll()
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          return res.data
+        }
+      } catch (err) {
+        console.warn('Erreur lors du chargement des catégories /all, tentative avec /categories publiques...', err)
+      }
+      try {
+        const publicRes = await categoriesApi.list()
+        if (Array.isArray(publicRes.data) && publicRes.data.length > 0) {
+          return publicRes.data
+        }
+      } catch (err) {
+        console.error('Échec du chargement des catégories:', err)
+      }
+      return []
+    },
   })
 
-  const { data: productsData, isLoading } = useQuery({
+  // Normalize categories supporting id / _id and name / nom / name_fr with fallback
+  const categories = React.useMemo(() => {
+    if (Array.isArray(rawCategories) && rawCategories.length > 0) {
+      return rawCategories.map((c: any) => ({
+        id: String(c.id || c._id || c.slug || ''),
+        name: String(c.name || c.nom || c.name_fr || c.slug || 'Catégorie sans nom'),
+        slug: c.slug || '',
+      })).filter(c => Boolean(c.id && c.name))
+    }
+    return FALLBACK_CATEGORIES
+  }, [rawCategories])
+
+  const { data: productsData, isLoading, refetch: refetchProducts } = useQuery({
     queryKey: ['admin-products', search],
     queryFn: () => productsApi.list({ search: search || undefined, limit: 100 }).then(r => r.data),
+  })
+
+  useLiveSync(['products', 'stock'], () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-products'] })
+    queryClient.invalidateQueries({ queryKey: ['all-categories'] })
+    refetchProducts()
   })
 
   const createMutation = useMutation({
@@ -258,11 +303,33 @@ const AdminProductsPage: React.FC = () => {
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth required>
-                <InputLabel>Catégorie</InputLabel>
-                <Select value={form.category_id} onChange={(e) => setForm(p => ({ ...p, category_id: e.target.value }))} label="Catégorie">
-                  {(categories || []).map((cat: any) => (
-                    <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
-                  ))}
+                <InputLabel id="category-select-label">Catégorie</InputLabel>
+                <Select
+                  labelId="category-select-label"
+                  value={form.category_id}
+                  onChange={(e) => setForm(p => ({ ...p, category_id: e.target.value }))}
+                  label="Catégorie"
+                  MenuProps={{
+                    disablePortal: false,
+                    PaperProps: {
+                      sx: {
+                        zIndex: 2000,
+                        maxHeight: 300,
+                      },
+                    },
+                  }}
+                >
+                  {categories.length === 0 ? (
+                    <MenuItem disabled value="">
+                      <em>Aucune catégorie disponible</em>
+                    </MenuItem>
+                  ) : (
+                    categories.map((cat: any) => (
+                      <MenuItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </MenuItem>
+                    ))
+                  )}
                 </Select>
               </FormControl>
             </Grid>
